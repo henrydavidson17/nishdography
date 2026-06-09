@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nishdography</title>
+<meta name="description" content="Photographs on film and digital — travel, street, architecture, people, and lino prints.">
+
+<!-- Fonts: Archivo (the wordmark + interface) and Space Mono (the film-edge labels) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   1. DESIGN TOKENS
+   Every colour and size used on the site is defined here once,
+   so changing the look later means editing a few lines.
+   ============================================================ */
+:root{
+  --bg:        #141210;   /* darkroom near-black, slightly warm   */
+  --surface:   #1d1a16;   /* panels, chips                        */
+  --surface-2: #26221d;   /* hovered chips, modal fields          */
+  --ink:       #ede7dc;   /* main text, warm off-white            */
+  --muted:     #8c8478;   /* secondary text                       */
+  --line:      #2c2823;   /* hairline borders                     */
+  --rebate:    #e8862b;   /* film-rebate amber — the accent       */
+  --rebate-dim:#a35e1f;
+  --radius:    4px;
+  --gap:       14px;
+  --mono: "Space Mono", ui-monospace, monospace;
+  --sans: "Archivo", system-ui, sans-serif;
+}
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+html{ scrollbar-gutter:stable; }
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:15px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+img{ display:block; max-width:100%; }
+button{ font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
+:focus-visible{ outline:2px solid var(--rebate); outline-offset:2px; }
+
+/* ============================================================
+   2. HEADER — expanded wordmark + film-edge strapline
+   ============================================================ */
+header{
+  padding:clamp(28px,5vw,56px) clamp(18px,4vw,48px) 10px;
+}
+.wordmark{
+  font-family:var(--sans);
+  font-variation-settings:"wdth" 125, "wght" 800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  font-size:clamp(28px,6vw,64px);
+  line-height:1;
+  user-select:none;
+}
+.wordmark span{ color:var(--rebate); }
+.strapline{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-top:10px;
+}
+
+/* ============================================================
+   3. FILTER RAIL — subject chips, film/digital toggle, sort
+   ============================================================ */
+.rail{
+  position:sticky; top:0; z-index:30;
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+  padding:14px clamp(18px,4vw,48px);
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+}
+.chip{
+  font-family:var(--mono); font-size:11px; letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:6px 12px;
+  border:1px solid var(--line); border-radius:999px;
+  background:var(--surface); color:var(--muted);
+  transition:color .15s, border-color .15s, background .15s;
+}
+.chip:hover{ color:var(--ink); background:var(--surface-2); }
+.chip.on{ color:var(--bg); background:var(--ink); border-color:var(--ink); }
+
+.seg{
+  display:flex; border:1px solid var(--line); border-radius:999px; overflow:hidden;
+  margin-left:auto;
+}
+.seg button{
+  font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  padding:6px 12px; color:var(--muted); background:var(--surface);
+}
+.seg button.on{ color:var(--bg); background:var(--rebate); }
+.seg button.on.seg-digital{ background:var(--ink); }
+
+select{
+  font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  background:var(--surface); color:var(--muted);
+  border:1px solid var(--line); border-radius:999px;
+  padding:6px 12px;
+}
+
+.edit-toggle{
+  font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  padding:6px 12px; border-radius:999px;
+  border:1px dashed var(--line); color:var(--muted);
+}
+.edit-toggle.on{ border-color:var(--rebate); color:var(--rebate); }
+
+/* Bar of extra buttons that appears only in edit mode */
+.editbar{
+  display:none; flex-wrap:wrap; gap:8px; align-items:center;
+  padding:10px clamp(18px,4vw,48px);
+  border-bottom:1px solid var(--line);
+  font-family:var(--mono); font-size:11px;
+}
+body.editing .editbar{ display:flex; }
+.editbar .btn{
+  padding:6px 12px; border-radius:var(--radius);
+  border:1px solid var(--rebate-dim); color:var(--rebate);
+}
+.editbar .btn:hover{ background:var(--surface-2); }
+.editbar .hint{ color:var(--muted); letter-spacing:.04em; }
+
+/* ============================================================
+   4. THE GRID — masonry that keeps your left-to-right order
+   ============================================================ */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(min(240px,100%),1fr));
+  grid-auto-rows:8px;            /* tiny rows; each card spans many */
+  gap:var(--gap);
+  padding:clamp(18px,4vw,48px);
+}
+.card{
+  position:relative; overflow:hidden; border-radius:var(--radius);
+  background:var(--surface);
+}
+.card img{ width:100%; height:100%; object-fit:cover; cursor:zoom-in; }
+.card .overlay{
+  position:absolute; inset:auto 0 0 0;
+  padding:28px 12px 10px;
+  background:linear-gradient(transparent, rgba(10,8,6,.82));
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
+  color:var(--ink);
+  opacity:0; transition:opacity .2s;
+  pointer-events:none;
+}
+.card:hover .overlay, .card:focus-within .overlay{ opacity:1; }
+.overlay .tags{ color:var(--muted); text-transform:uppercase; }
+.overlay .tags .film{ color:var(--rebate); }
+
+/* Edit-mode appearance: draggable, with a visible handle */
+body.editing .card{ outline:1px dashed var(--rebate-dim); cursor:grab; }
+body.editing .card img{ cursor:grab; }
+body.editing .card.dragging{ opacity:.35; }
+body.editing .card.dragover{ outline:2px solid var(--rebate); }
+.card .edit-pencil{
+  position:absolute; top:8px; right:8px; z-index:2;
+  display:none;
+  font-family:var(--mono); font-size:10px; letter-spacing:.08em;
+  padding:4px 8px; border-radius:var(--radius);
+  background:rgba(10,8,6,.85); color:var(--rebate);
+  border:1px solid var(--rebate-dim);
+}
+body.editing .card .edit-pencil{ display:block; }
+
+.empty{
+  grid-column:1/-1; padding:60px 0; text-align:center;
+  font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.1em;
+}
+
+/* ============================================================
+   5. LIGHTBOX — full-size photo with a film-rebate strip
+   ============================================================ */
+.lightbox{
+  position:fixed; inset:0; z-index:100;
+  display:none; flex-direction:column; align-items:center; justify-content:center;
+  background:rgba(8,7,5,.95);
+  padding:24px;
+}
+.lightbox.open{ display:flex; }
+.lightbox img{
+  max-width:min(1200px,94vw); max-height:78vh;
+  object-fit:contain; border-radius:2px;
+}
+.rebate{
+  margin-top:14px;
+  font-family:var(--mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--rebate);
+  display:flex; gap:18px; flex-wrap:wrap; justify-content:center;
+}
+.rebate.digital{ color:var(--muted); letter-spacing:.18em; }
+.rebate .cap{ color:var(--ink); letter-spacing:.06em; text-transform:none; }
+.lb-btn{
+  position:absolute; top:50%; transform:translateY(-50%);
+  font-size:26px; color:var(--muted); padding:18px;
+}
+.lb-btn:hover{ color:var(--ink); }
+#lbPrev{ left:6px; } #lbNext{ right:6px; }
+#lbClose{ position:absolute; top:10px; right:14px; font-size:22px; color:var(--muted); padding:10px; }
+#lbClose:hover{ color:var(--ink); }
+
+/* ============================================================
+   6. EDIT MODAL — change a photo's caption, tags, date
+   ============================================================ */
+.modal-back{
+  position:fixed; inset:0; z-index:120;
+  display:none; align-items:center; justify-content:center;
+  background:rgba(8,7,5,.8); padding:20px;
+}
+.modal-back.open{ display:flex; }
+.modal{
+  width:min(440px,100%); max-height:90vh; overflow:auto;
+  background:var(--surface); border:1px solid var(--line); border-radius:8px;
+  padding:22px;
+}
+.modal h2{
+  font-family:var(--mono); font-size:12px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--rebate); margin-bottom:16px;
+}
+.field{ margin-bottom:14px; }
+.field label{
+  display:block; font-family:var(--mono); font-size:10px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted); margin-bottom:5px;
+}
+.field input[type=text], .field input[type=date], .field select{
+  width:100%; padding:8px 10px;
+  background:var(--surface-2); color:var(--ink);
+  border:1px solid var(--line); border-radius:var(--radius);
+  font:inherit;
+}
+.subject-boxes{ display:flex; flex-wrap:wrap; gap:6px; }
+.subject-boxes label{
+  display:flex; align-items:center; gap:6px;
+  font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--ink);
+  padding:5px 10px; border:1px solid var(--line); border-radius:999px;
+  cursor:pointer; margin:0;
+}
+.subject-boxes input{ accent-color:var(--rebate); }
+.modal .row{ display:flex; gap:10px; margin-top:18px; }
+.modal .save{ flex:1; padding:9px; border-radius:var(--radius); background:var(--rebate); color:var(--bg); font-weight:700; }
+.modal .danger{ padding:9px 12px; border-radius:var(--radius); border:1px solid #6b2f26; color:#d96a55; }
+#fsField{ display:none; }
+body.fs-on #fsField{ display:block; }
+
+/* ============================================================
+   7. FOOTER + misc
+   ============================================================ */
+footer{
+  padding:34px clamp(18px,4vw,48px) 48px;
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--muted);
+  border-top:1px solid var(--line);
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+}
+.sample-note{
+  display:none;
+  margin:0 clamp(18px,4vw,48px); padding:10px 14px;
+  border:1px dashed var(--rebate-dim); border-radius:var(--radius);
+  font-family:var(--mono); font-size:11px; color:var(--rebate); letter-spacing:.04em;
+}
+body.sample .sample-note{ display:block; }
+
+@media (prefers-reduced-motion: reduce){
+  *{ transition:none !important; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">nishdog<span>raphy</span></div>
+  <div class="strapline">35mm + digital &nbsp;·&nbsp; geneva / london / elsewhere</div>
+</header>
+
+<p class="sample-note">Showing built-in sample photos — once photos.json and your photos folder are uploaded, your own pictures appear here.</p>
+
+<!-- Filter rail: built dynamically from whatever tags exist in photos.json -->
+<nav class="rail" aria-label="Filters">
+  <div id="subjectChips" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+  <div class="seg" role="group" aria-label="Format">
+    <button data-format="all" class="on">All</button>
+    <button data-format="film">Film</button>
+    <button data-format="digital" class="seg-digital">Digital</button>
+  </div>
+  <select id="sortSel" aria-label="Sort order">
+    <option value="custom">My order</option>
+    <option value="new">Newest first</option>
+    <option value="old">Oldest first</option>
+    <option value="shuffle">Shuffle</option>
+  </select>
+  <button class="edit-toggle" id="editToggle">Edit</button>
+</nav>
+
+<!-- Extra controls that appear only in edit mode -->
+<div class="editbar">
+  <button class="btn" id="addBtn">+ Add photos</button>
+  <button class="btn" id="dlBtn">Download photos.json</button>
+  <span class="hint">drag photos to reorder · click ✎ to tag · then download the json and put it in your site folder</span>
+  <input type="file" id="filePick" accept="image/*" multiple hidden>
+</div>
+
+<main>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>
+  <span>© nishdog</span>
+  <span>shot on film &amp; sensor</span>
+</footer>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <button id="lbClose" aria-label="Close">✕</button>
+  <button class="lb-btn" id="lbPrev" aria-label="Previous photo">‹</button>
+  <img id="lbImg" alt="">
+  <div class="rebate" id="rebate"></div>
+  <button class="lb-btn" id="lbNext" aria-label="Next photo">›</button>
+</div>
+
+<!-- Edit modal -->
+<div class="modal-back" id="modalBack">
+  <div class="modal">
+    <h2>Edit photo</h2>
+    <div class="field"><label for="fCaption">Caption</label><input type="text" id="fCaption"></div>
+    <div class="field"><label for="fDate">Date</label><input type="date" id="fDate"></div>
+    <div class="field"><label for="fFormat">Format</label>
+      <select id="fFormat"><option value="digital">Digital</option><option value="film">Film</option></select>
+    </div>
+    <div class="field" id="fsField"><label for="fStock">Film stock</label><input type="text" id="fStock" placeholder="e.g. Portra 400"></div>
+    <div class="field"><label>Subjects</label><div class="subject-boxes" id="fSubjects"></div></div>
+    <div class="field"><label for="fNewSubject">Add a new subject tag</label><input type="text" id="fNewSubject" placeholder="type and press Enter"></div>
+    <div class="row">
+      <button class="save" id="fSave">Save</button>
+      <button class="danger" id="fDelete">Remove</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   SAMPLE DATA — used only when photos.json can't be loaded
+   (e.g. opening this file directly on your computer).
+   Once the site is online with a photos.json next to it,
+   that file wins and this is ignored.
+   ============================================================ */
+const SAMPLE = { photos: [
+ {id:"s01", src:"https://picsum.photos/seed/tram28/900/1200",  w:900,  h:1200, caption:"Tram 28, Alfama",        format:"film",    film_stock:"Portra 400", subjects:["travel","street"],       date:"2024-06-15"},
+ {id:"s02", src:"https://picsum.photos/seed/lakegva/1200/800", w:1200, h:800,  caption:"Lake Geneva, first swim", format:"digital", subjects:["travel"],                 date:"2026-04-20"},
+ {id:"s03", src:"https://picsum.photos/seed/brutal1/900/1100", w:900,  h:1100, caption:"Barbican stairwell",      format:"film",    film_stock:"HP5 Plus",   subjects:["architecture"],           date:"2023-11-02"},
+ {id:"s04", src:"https://picsum.photos/seed/maxstag/1100/800", w:1100, h:800,  caption:"Max, somewhere loud",     format:"digital", subjects:["fam & friends"],          date:"2025-08-09"},
+ {id:"s05", src:"https://picsum.photos/seed/lino1/900/900",    w:900,  h:900,  caption:"Lino — kingfisher, ed. of 6", format:"digital", subjects:["linos"],              date:"2024-01-12"},
+ {id:"s06", src:"https://picsum.photos/seed/soho/900/1250",    w:900,  h:1250, caption:"Soho, late",              format:"film",    film_stock:"Kodak Gold 200", subjects:["street"],             date:"2023-07-30"},
+ {id:"s07", src:"https://picsum.photos/seed/cornavin/1200/850",w:1200, h:850,  caption:"Cornavin, 7.42am",        format:"digital", subjects:["street","architecture"],  date:"2026-05-02"},
+ {id:"s08", src:"https://picsum.photos/seed/edgy1/900/1150",   w:900,  h:1150, caption:"Untitled (edgy)",         format:"film",    film_stock:"HP5 Plus",   subjects:["edgy"],                   date:"2022-10-19"},
+ {id:"s09", src:"https://picsum.photos/seed/flora/1000/800",   w:1000, h:800,  caption:"F., golden hour",         format:"film",    film_stock:"Ektar 100",  subjects:["fam & friends"],          date:"2025-05-24"},
+ {id:"s10", src:"https://picsum.photos/seed/saleve/1200/780",  w:1200, h:780,  caption:"Salève, from the col",    format:"digital", subjects:["travel"],                 date:"2026-05-18"},
+ {id:"s11", src:"https://picsum.photos/seed/lino2/850/1100",   w:850,  h:1100, caption:"Lino — tide lines",       format:"digital", subjects:["linos"],                  date:"2024-09-03"},
+ {id:"s12", src:"https://picsum.photos/seed/lisboa2/900/1200", w:900,  h:1200, caption:"Azulejos, Bairro Alto",   format:"film",    film_stock:"Portra 400", subjects:["travel","architecture"],  date:"2024-06-17"},
+]};
+
+/* ============================================================
+   STATE — everything the page needs to remember
+   ============================================================ */
+let photos = [];                 // the master list, in YOUR order
+let subjectFilter = "all";
+let formatFilter  = "all";
+let sortMode      = "custom";
+let editMode      = false;
+let visible       = [];          // what's currently shown after filter/sort
+let lbIndex       = 0;           // which photo the lightbox is on
+let editingId     = null;        // which photo the modal is editing
+let dragId        = null;
+
+const $ = sel => document.querySelector(sel);
+
+/* ============================================================
+   LOAD — try photos.json, fall back to the sample set
+   ============================================================ */
+async function load(){
+  try{
+    const r = await fetch("photos.json", {cache:"no-store"});
+    if(!r.ok) throw new Error("no manifest");
+    photos = (await r.json()).photos;
+  }catch(e){
+    photos = SAMPLE.photos;
+    document.body.classList.add("sample");
+  }
+  buildChips();
+  render();
+}
+
+/* ============================================================
+   FILTER + SORT
+   ============================================================ */
+function allSubjects(){
+  const s = new Set();
+  photos.forEach(p => (p.subjects||[]).forEach(t => s.add(t)));
+  return [...s].sort();
+}
+
+function computeVisible(){
+  let list = photos.filter(p =>
+    (subjectFilter==="all" || (p.subjects||[]).includes(subjectFilter)) &&
+    (formatFilter==="all"  || p.format===formatFilter)
+  );
+  if(sortMode==="new")  list = [...list].sort((a,b)=> (b.date||"").localeCompare(a.date||""));
+  if(sortMode==="old")  list = [...list].sort((a,b)=> (a.date||"").localeCompare(b.date||""));
+  if(sortMode==="shuffle") list = [...list].sort(()=> Math.random()-0.5);
+  return list;
+}
+
+function buildChips(){
+  const wrap = $("#subjectChips");
+  wrap.innerHTML = "";
+  const mk = (label, val) => {
+    const b = document.createElement("button");
+    b.className = "chip" + (subjectFilter===val ? " on" : "");
+    b.textContent = label;
+    b.onclick = () => { subjectFilter = val; buildChips(); render(); };
+    wrap.appendChild(b);
+  };
+  mk("All", "all");
+  allSubjects().forEach(s => mk(s, s));
+}
+
+/* ============================================================
+   RENDER THE GRID
+   ============================================================ */
+function render(){
+  visible = editMode ? photos : computeVisible();   // edit mode always shows everything, in your saved order
+  const grid = $("#grid");
+  grid.innerHTML = "";
+
+  if(visible.length===0){
+    grid.innerHTML = `<div class="empty">No photos match these filters yet.</div>`;
+    return;
+  }
+
+  visible.forEach((p, i) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.dataset.id = p.id;
+
+    const img = document.createElement("img");
+    img.src = p._localUrl || p.src;
+    img.alt = p.caption || "Photograph";
+    img.loading = "lazy";
+    img.dataset.w = p.w || 3; img.dataset.h = p.h || 2;
+    img.style.aspectRatio = `${p.w||3} / ${p.h||2}`;
+    img.addEventListener("load", layout);
+    if(!editMode) img.onclick = () => openLightbox(i);
+    card.appendChild(img);
+
+    const ov = document.createElement("div");
+    ov.className = "overlay";
+    const tagBits = (p.subjects||[]).join(" · ");
+    ov.innerHTML = `<div>${p.caption||""}</div>
+      <div class="tags"><span class="${p.format==='film'?'film':''}">${p.format||""}</span>${tagBits? " · "+tagBits : ""}</div>`;
+    card.appendChild(ov);
+
+    if(editMode){
+      const pencil = document.createElement("button");
+      pencil.className = "edit-pencil";
+      pencil.textContent = "✎ edit";
+      pencil.onclick = () => openModal(p.id);
+      card.appendChild(pencil);
+
+      // Drag-and-drop reordering
+      card.draggable = true;
+      card.addEventListener("dragstart", () => { dragId = p.id; card.classList.add("dragging"); });
+      card.addEventListener("dragend",   () => { dragId = null; card.classList.remove("dragging"); });
+      card.addEventListener("dragover",  e => { e.preventDefault(); card.classList.add("dragover"); });
+      card.addEventListener("dragleave", () => card.classList.remove("dragover"));
+      card.addEventListener("drop", e => {
+        e.preventDefault(); card.classList.remove("dragover");
+        if(!dragId || dragId===p.id) return;
+        const from = photos.findIndex(x=>x.id===dragId);
+        const to   = photos.findIndex(x=>x.id===p.id);
+        photos.splice(to, 0, photos.splice(from,1)[0]);
+        render();
+      });
+    }
+    grid.appendChild(card);
+  });
+  requestAnimationFrame(layout);
+}
+
+/* Masonry: each card spans enough 8px rows to fit its image,
+   so order stays left-to-right (which makes dragging intuitive). */
+function layout(){
+  const grid = $("#grid");
+  const rowH = 8, gap = parseFloat(getComputedStyle(grid).gap) || 14;
+  grid.querySelectorAll(".card").forEach(c => {
+    const img = c.querySelector("img");
+    const w = c.getBoundingClientRect().width;
+    const h = w * (img.dataset.h / img.dataset.w);
+    c.style.gridRowEnd = "span " + Math.ceil((h + gap) / (rowH + gap));
+  });
+}
+let rT; window.addEventListener("resize", ()=>{ clearTimeout(rT); rT=setTimeout(layout,120); });
+
+/* ============================================================
+   LIGHTBOX with the film-rebate strip
+   ============================================================ */
+function openLightbox(i){ lbIndex=i; showLb(); $("#lightbox").classList.add("open"); }
+function showLb(){
+  const p = visible[lbIndex];
+  $("#lbImg").src = p._localUrl || p.src;
+  $("#lbImg").alt = p.caption || "Photograph";
+  const reb = $("#rebate");
+  const frame = String(lbIndex+1).padStart(2,"0") + "A";
+  const when = p.date ? new Date(p.date).toLocaleDateString("en-GB",{month:"short",year:"numeric"}) : "";
+  if(p.format==="film"){
+    reb.className = "rebate";
+    reb.innerHTML = `<span>nishdog</span><span>▸ ${frame}</span><span>${p.film_stock||"35mm"}</span><span>${when}</span><span class="cap">${p.caption||""}</span>`;
+  }else{
+    reb.className = "rebate digital";
+    reb.innerHTML = `<span>nishdog</span><span>${frame}</span><span>digital</span><span>${when}</span><span class="cap">${p.caption||""}</span>`;
+  }
+}
+function closeLb(){ $("#lightbox").classList.remove("open"); }
+$("#lbClose").onclick = closeLb;
+$("#lbPrev").onclick = ()=>{ lbIndex=(lbIndex-1+visible.length)%visible.length; showLb(); };
+$("#lbNext").onclick = ()=>{ lbIndex=(lbIndex+1)%visible.length; showLb(); };
+$("#lightbox").addEventListener("click", e=>{ if(e.target.id==="lightbox") closeLb(); });
+document.addEventListener("keydown", e=>{
+  if(!$("#lightbox").classList.contains("open")) return;
+  if(e.key==="Escape") closeLb();
+  if(e.key==="ArrowLeft") $("#lbPrev").click();
+  if(e.key==="ArrowRight") $("#lbNext").click();
+});
+
+/* ============================================================
+   FILTER RAIL EVENTS
+   ============================================================ */
+document.querySelectorAll(".seg button").forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll(".seg button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    formatFilter = b.dataset.format;
+    render();
+  };
+});
+$("#sortSel").onchange = e => { sortMode = e.target.value; render(); };
+
+/* ============================================================
+   EDIT MODE
+   ============================================================ */
+$("#editToggle").onclick = ()=>{
+  editMode = !editMode;
+  document.body.classList.toggle("editing", editMode);
+  $("#editToggle").classList.toggle("on", editMode);
+  $("#editToggle").textContent = editMode ? "Done" : "Edit";
+  render();
+};
+
+/* --- Add photos: pick files, read their size, create entries.
+       You still need to copy the actual files into the photos/
+       folder of the site — this just writes the catalogue. --- */
+$("#addBtn").onclick = ()=> $("#filePick").click();
+$("#filePick").onchange = async e=>{
+  for(const f of e.target.files){
+    const url = URL.createObjectURL(f);
+    const dims = await new Promise(res=>{
+      const im = new Image();
+      im.onload = ()=> res({w:im.naturalWidth, h:im.naturalHeight});
+      im.src = url;
+    });
+    photos.push({
+      id: "p" + Date.now() + Math.floor(Math.random()*1000),
+      src: "photos/" + f.name,
+      _localUrl: url,                      // preview now; real path used on the live site
+      w: dims.w, h: dims.h,
+      caption: "", format: "digital", subjects: [],
+      date: new Date(f.lastModified).toISOString().slice(0,10)
+    });
+  }
+  e.target.value = "";
+  buildChips(); render();
+};
+
+/* --- Download the updated photos.json --- */
+$("#dlBtn").onclick = ()=>{
+  const clean = photos.map(({_localUrl, ...rest}) => rest);
+  const blob = new Blob([JSON.stringify({photos:clean}, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "photos.json";
+  a.click();
+};
+
+/* ============================================================
+   EDIT MODAL
+   ============================================================ */
+function openModal(id){
+  editingId = id;
+  const p = photos.find(x=>x.id===id);
+  $("#fCaption").value = p.caption||"";
+  $("#fDate").value = p.date||"";
+  $("#fFormat").value = p.format||"digital";
+  $("#fStock").value = p.film_stock||"";
+  document.body.classList.toggle("fs-on", p.format==="film");
+  const box = $("#fSubjects");
+  box.innerHTML = "";
+  allSubjects().forEach(s=>{
+    const l = document.createElement("label");
+    const c = document.createElement("input");
+    c.type="checkbox"; c.value=s; c.checked = (p.subjects||[]).includes(s);
+    l.appendChild(c); l.appendChild(document.createTextNode(s));
+    box.appendChild(l);
+  });
+  $("#modalBack").classList.add("open");
+}
+$("#fFormat").onchange = e => document.body.classList.toggle("fs-on", e.target.value==="film");
+$("#fNewSubject").addEventListener("keydown", e=>{
+  if(e.key!=="Enter") return;
+  const v = e.target.value.trim().toLowerCase();
+  if(!v) return;
+  const l = document.createElement("label");
+  const c = document.createElement("input");
+  c.type="checkbox"; c.value=v; c.checked=true;
+  l.appendChild(c); l.appendChild(document.createTextNode(v));
+  $("#fSubjects").appendChild(l);
+  e.target.value="";
+});
+$("#fSave").onclick = ()=>{
+  const p = photos.find(x=>x.id===editingId);
+  p.caption = $("#fCaption").value;
+  p.date = $("#fDate").value;
+  p.format = $("#fFormat").value;
+  if(p.format==="film") p.film_stock = $("#fStock").value; else delete p.film_stock;
+  p.subjects = [...$("#fSubjects").querySelectorAll("input:checked")].map(c=>c.value);
+  $("#modalBack").classList.remove("open");
+  buildChips(); render();
+};
+$("#fDelete").onclick = ()=>{
+  if(!confirm("Remove this photo from the site? (The file itself isn't deleted.)")) return;
+  photos = photos.filter(x=>x.id!==editingId);
+  $("#modalBack").classList.remove("open");
+  buildChips(); render();
+};
+$("#modalBack").addEventListener("click", e=>{ if(e.target.id==="modalBack") $("#modalBack").classList.remove("open"); });
+
+load();
+</script>
+</body>
+</html>
