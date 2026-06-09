@@ -1,16 +1,1 @@
-{
-  "photos": [
-    {"id":"s01","src":"https://picsum.photos/seed/tram28/900/1200","w":900,"h":1200,"caption":"Tram 28, Alfama","format":"film","film_stock":"Portra 400","subjects":["travel","street"],"date":"2024-06-15"},
-    {"id":"s02","src":"https://picsum.photos/seed/lakegva/1200/800","w":1200,"h":800,"caption":"Lake Geneva, first swim","format":"digital","subjects":["travel"],"date":"2026-04-20"},
-    {"id":"s03","src":"https://picsum.photos/seed/brutal1/900/1100","w":900,"h":1100,"caption":"Barbican stairwell","format":"film","film_stock":"HP5 Plus","subjects":["architecture"],"date":"2023-11-02"},
-    {"id":"s04","src":"https://picsum.photos/seed/maxstag/1100/800","w":1100,"h":800,"caption":"Max, somewhere loud","format":"digital","subjects":["fam & friends"],"date":"2025-08-09"},
-    {"id":"s05","src":"https://picsum.photos/seed/lino1/900/900","w":900,"h":900,"caption":"Lino — kingfisher, ed. of 6","format":"digital","subjects":["linos"],"date":"2024-01-12"},
-    {"id":"s06","src":"https://picsum.photos/seed/soho/900/1250","w":900,"h":1250,"caption":"Soho, late","format":"film","film_stock":"Kodak Gold 200","subjects":["street"],"date":"2023-07-30"},
-    {"id":"s07","src":"https://picsum.photos/seed/cornavin/1200/850","w":1200,"h":850,"caption":"Cornavin, 7.42am","format":"digital","subjects":["street","architecture"],"date":"2026-05-02"},
-    {"id":"s08","src":"https://picsum.photos/seed/edgy1/900/1150","w":900,"h":1150,"caption":"Untitled (edgy)","format":"film","film_stock":"HP5 Plus","subjects":["edgy"],"date":"2022-10-19"},
-    {"id":"s09","src":"https://picsum.photos/seed/flora/1000/800","w":1000,"h":800,"caption":"F., golden hour","format":"film","film_stock":"Ektar 100","subjects":["fam & friends"],"date":"2025-05-24"},
-    {"id":"s10","src":"https://picsum.photos/seed/saleve/1200/780","w":1200,"h":780,"caption":"Salève, from the col","format":"digital","subjects":["travel"],"date":"2026-05-18"},
-    {"id":"s11","src":"https://picsum.photos/seed/lino2/850/1100","w":850,"h":1100,"caption":"Lino — tide lines","format":"digital","subjects":["linos"],"date":"2024-09-03"},
-    {"id":"s12","src":"https://picsum.photos/seed/lisboa2/900/1200","w":900,"h":1200,"caption":"Azulejos, Bairro Alto","format":"film","film_stock":"Portra 400","subjects":["travel","architecture"],"date":"2024-06-17"}
-  ]
-}
+{ "photos": [] }
